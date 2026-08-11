@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 export const updateOrderStatusSchema = z.object({
   status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled'], {
-    required_error: 'Status is required',
-    invalid_type_error: 'Status must be one of pending, processing, shipped, delivered, or cancelled',
+    message: 'Status must be one of pending, processing, shipped, delivered, or cancelled',
   }),
 });
 
