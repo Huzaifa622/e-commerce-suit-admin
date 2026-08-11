@@ -14,6 +14,7 @@ export async function saveAuthToken(token: string) {
 export async function removeAuthToken() {
   const cookieStore = await cookies();
   cookieStore.delete('auth_token');
+  cookieStore.delete('token');
 }
 
 export async function getAuthToken() {

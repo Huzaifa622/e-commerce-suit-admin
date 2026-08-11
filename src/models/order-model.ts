@@ -11,6 +11,7 @@ export interface IOrder extends Document {
   customerEmail: string;
   items: IOrderItem[];
   totalAmount: number;
+  currency: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: string;
   createdAt: Date;
@@ -32,6 +33,7 @@ const OrderSchema = new Schema<IOrder>(
     customerEmail: { type: String, required: true },
     items: [OrderItemSchema],
     totalAmount: { type: Number, required: true },
+    currency: { type: String, default: 'PKR' },
     status: {
       type: String,
       enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],

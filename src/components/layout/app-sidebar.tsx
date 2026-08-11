@@ -29,6 +29,12 @@ import {
 } from '@/components/ui/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+import { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+
 const navItems = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/products', icon: Package },
@@ -40,6 +46,28 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await axios.post('/api/auth/logout');
+      
+      // Clear client side cookies if any non-httpOnly cookies exist
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      
+      setShowLogoutDialog(false);
+      toast.success('Logged out successfully');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <Sidebar variant="inset" className="border-r border-zinc-200/80 bg-zinc-50/50 dark:border-zinc-800/80 dark:bg-zinc-950/50">
@@ -117,7 +145,13 @@ export function AppSidebar() {
                 <DropdownMenuItem className="cursor-pointer text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900">
                   Support Help
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 text-xs cursor-pointer rounded-md transition-colors mt-1 border-t border-zinc-100 dark:border-zinc-900 pt-2">
+                <DropdownMenuItem 
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10 text-xs cursor-pointer rounded-md transition-colors mt-1 border-t border-zinc-100 dark:border-zinc-900 pt-2"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowLogoutDialog(true);
+                  }}
+                >
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -125,6 +159,25 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to log out of your session? This will clear your authentication token and return you to the login screen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)} disabled={isLoggingOut}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

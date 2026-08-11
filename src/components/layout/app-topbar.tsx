@@ -1,13 +1,42 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { toast } from 'sonner';
+
 import { Search, User, Bell, HelpCircle, Calendar, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 export function AppTopbar() {
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await axios.post('/api/auth/logout');
+      
+      // Clear client side cookies if any non-httpOnly cookies exist
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      
+      setShowLogoutDialog(false);
+      toast.success('Logged out successfully');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   return (
     <header className="flex h-18 items-center gap-4 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/80 px-6 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <SidebarTrigger className="text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg p-2" />
@@ -54,12 +83,11 @@ export function AppTopbar() {
           <DropdownMenuTrigger render={
             <Button variant="ghost" className="flex items-center gap-2.5 h-auto p-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-all select-none">
               <div className="hidden md:flex flex-col items-end text-xs">
-                <span className="font-medium text-[#0D062D] dark:text-zinc-50 leading-tight">Anima Agrawal</span>
-                <span className="text-[10px] text-[#787486] dark:text-zinc-500 mt-0.5 font-normal">U.P, India</span>
+                <span className="font-medium text-[#0D062D] dark:text-zinc-50 leading-tight">Admin</span>
+                <span className="text-[10px] text-[#787486] dark:text-zinc-500 mt-0.5 font-normal">Administrator</span>
               </div>
               <Avatar className="h-9 w-9 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Anima Agrawal" />
-                <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-semibold">AA</AvatarFallback>
+                <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-semibold">AD</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3.5 w-3.5 text-[#292D32] dark:text-zinc-400" />
             </Button>
@@ -72,10 +100,37 @@ export function AppTopbar() {
               <DropdownMenuItem className="cursor-pointer text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900">Support</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-900" />
-            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-xs transition-colors">Logout</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-xs transition-colors"
+              onSelect={(e) => {
+                e.preventDefault();
+                setShowLogoutDialog(true);
+              }}
+            >
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to log out of your session? This will clear your authentication token and return you to the login screen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)} disabled={isLoggingOut}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }
