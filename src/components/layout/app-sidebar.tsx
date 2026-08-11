@@ -78,6 +78,7 @@ export function AppSidebar() {
               src="/logo.png"
               alt="Logo"
               fill
+              sizes="128px"
               className="object-contain object-left dark:brightness-110"
               priority
             />
